@@ -57,7 +57,7 @@ export function CommitNode({ commit, position, color, onSelect }: CommitNodeProp
               </div>
               <ScrollArea className="h-32 w-full">
                 <p className="text-sm text-muted-foreground whitespace-pre-wrap font-code pr-4">
-                  {commit.message}
+                  {commit.message || 'No commit message'}
                 </p>
               </ScrollArea>
             </div>
