@@ -19,7 +19,7 @@ interface CommitNodeProps {
 export function CommitNode({ commit, position, color, onSelect }: CommitNodeProps) {
   const id = useId();
   const isMerge = commit.parents.length > 1;
-  const commitTitle = commit.message.split('\n')[0];
+  const commitTitle = (commit.message || 'No commit message').split('\n')[0];
 
   return (
     <>
