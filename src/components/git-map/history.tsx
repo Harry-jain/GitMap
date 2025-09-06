@@ -1,19 +1,31 @@
 "use client";
 
-import { History, Trash2 } from 'lucide-react';
+import { History, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { HistoryItem } from '@/lib/history';
 
 interface HistoryProps {
-  repoHistory: string[];
+  repoHistory: HistoryItem[];
   onSelectRepo: (url: string) => void;
   onClearHistory: () => void;
+  onRemoveFromHistory?: (url: string) => void;
+  isAuthenticated?: boolean;
 }
 
-export function RepoHistory({ repoHistory, onSelectRepo, onClearHistory }: HistoryProps) {
+export function RepoHistory({ repoHistory, onSelectRepo, onClearHistory, onRemoveFromHistory, isAuthenticated = false }: HistoryProps) {
   if (repoHistory.length === 0) {
     return (
         <div className="text-center text-sm text-sidebar-foreground/70">
-            No history yet.
+            {isAuthenticated ? (
+              "No history yet."
+            ) : (
+              <div className="space-y-2">
+                <div>No history yet.</div>
+                <div className="text-xs text-sidebar-foreground/50">
+                  Sign in to sync your history across devices
+                </div>
+              </div>
+            )}
         </div>
     );
   }
@@ -30,15 +42,29 @@ export function RepoHistory({ repoHistory, onSelectRepo, onClearHistory }: Histo
          </Button>
        </div>
         <div className="flex flex-col gap-1 text-sm">
-          {repoHistory.map((repo, index) => (
-            <button
-              key={index}
-              onClick={() => onSelectRepo(repo)}
-              className="text-left text-sidebar-foreground/90 hover:text-sidebar-accent-foreground hover:bg-sidebar-accent rounded-md p-2 truncate text-xs"
-              title={repo}
-            >
-              {repo.replace('https://github.com/', '')}
-            </button>
+          {repoHistory.map((item) => (
+            <div key={item.id} className="group flex items-center gap-1">
+              <button
+                onClick={() => onSelectRepo(item.repo_url)}
+                className="flex-1 text-left text-sidebar-foreground/90 hover:text-sidebar-accent-foreground hover:bg-sidebar-accent rounded-md p-2 truncate text-xs"
+                title={item.repo_url}
+              >
+                {item.repo_name}
+              </button>
+              {onRemoveFromHistory && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onRemoveFromHistory(item.repo_url);
+                  }}
+                  className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-sidebar-foreground/50 hover:text-sidebar-accent-foreground"
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              )}
+            </div>
           ))}
         </div>
     </div>
