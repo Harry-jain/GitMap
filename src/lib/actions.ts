@@ -89,7 +89,8 @@ export async function fetchRepoData(url: string): Promise<RepoData> {
 
   for (const branch of branches) {
     try {
-      const branchCommitsRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/commits?sha=${branch.name}&per_page=100`, { headers });
+      // Limit to a smaller number of commits per branch to avoid rate-limiting on very active branches
+      const branchCommitsRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/commits?sha=${branch.name}&per_page=50`, { headers });
       if(branchCommitsRes.ok) {
         const branchCommits = await branchCommitsRes.json();
         for (const commit of branchCommits) {
