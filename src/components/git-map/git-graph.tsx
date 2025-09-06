@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useMemo, useRef, useEffect, useState } from 'react';
-import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import { CommitNode } from './commit-node';
 import type { Commit, RepoData, BranchColorMap } from '@/lib/types';
+import { ScrollArea } from '../ui/scroll-area';
 
 interface GitGraphProps {
   repoData: RepoData;
@@ -128,15 +128,7 @@ export function GitGraph({ repoData, onCommitSelect }: GitGraphProps) {
   }
 
   return (
-    <TransformWrapper
-      minScale={0.1}
-      limitToBounds={false}
-      panning={{ velocityDisabled: true }}
-    >
-      <TransformComponent
-        wrapperStyle={{ width: '100%', height: '100%' }}
-        contentStyle={{ width: graphWidth, height: graphHeight }}
-      >
+    <ScrollArea className="w-full h-full">
         <div className="relative" style={{ width: graphWidth, height: graphHeight }}>
             <svg width={graphWidth} height={graphHeight} className="absolute top-0 left-0 pointer-events-none">
               <defs>
@@ -169,7 +161,6 @@ export function GitGraph({ repoData, onCommitSelect }: GitGraphProps) {
               />
             ))}
         </div>
-      </TransformComponent>
-    </TransformWrapper>
+    </ScrollArea>
   );
 }
