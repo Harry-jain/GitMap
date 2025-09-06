@@ -4,7 +4,7 @@ import type { Commit } from '@/lib/types';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useId } from 'react';
 import Image from 'next/image';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { User } from 'lucide-react';
 import { ScrollArea } from '../ui/scroll-area';
@@ -52,7 +52,7 @@ export function CommitNode({ commit, position, color, onSelect }: CommitNodeProp
                 </Avatar>
                 <div>
                   <p className="text-sm font-medium">{commit.author.name}</p>
-                  <p className="text-xs text-muted-foreground">{format(new Date(commit.author.date), "PPP p")}</p>
+                  <p className="text-xs text-muted-foreground">{format(parseISO(commit.author.date), "PPP p")}</p>
                 </div>
               </div>
               <ScrollArea className="h-32 w-full">

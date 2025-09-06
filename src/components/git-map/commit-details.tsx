@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { GitCommit, User, Calendar, BrainCircuit, GitBranch, FileDiff } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -84,7 +84,7 @@ export function CommitDetails({ commit, isOpen, onClose }: CommitDetailsProps) {
                     <Calendar className="h-4 w-4 mt-0.5 text-muted-foreground" />
                     <div>
                       <span className="font-medium">Date:</span>
-                      <span className="ml-2">{format(new Date(commit.author.date), "PPP p")}</span>
+                      <span className="ml-2">{format(parseISO(commit.author.date), "PPP p")}</span>
                     </div>
                   </div>
                    <div className="flex items-start gap-3">
