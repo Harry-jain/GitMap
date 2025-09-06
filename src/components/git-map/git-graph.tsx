@@ -64,25 +64,31 @@ export function GitGraph({ repoData, onCommitSelect }: GitGraphProps) {
     });
 
     const branchLanes: { [key: string]: number } = {};
-    let maxLane = 0;
-    
+    let leftLane = -1;
+    let rightLane = 1;
+
     // Assign main branch to lane 0 if it exists
     if (allBranchesSorted.some(b => b.name === mainBranchName)) {
         branchLanes[mainBranchName] = 0;
-        maxLane = 1;
     }
 
-    allBranchesSorted.forEach(b => {
-      if (branchLanes[b.name] === undefined) {
-        branchLanes[b.name] = maxLane++;
-      }
+    allBranchesSorted.forEach((b, index) => {
+        if (branchLanes[b.name] === undefined) {
+            if ((index % 2) === 1) { // Distribute branches to left and right
+                branchLanes[b.name] = rightLane++;
+            } else {
+                branchLanes[b.name] = leftLane--;
+            }
+        }
     });
+
+    const minLane = Math.min(...Object.values(branchLanes));
 
     const positions: { [sha: string]: { x: number; y: number } } = {};
     sortedCommits.forEach((commit, index) => {
       const lane = branchLanes[commit.branch] ?? 0;
       positions[commit.sha] = {
-        x: lane * X_SPACING + X_SPACING / 2,
+        x: (lane - minLane) * X_SPACING + X_SPACING / 2,
         y: index * Y_SPACING + Y_SPACING / 2,
       };
     });
@@ -117,8 +123,9 @@ export function GitGraph({ repoData, onCommitSelect }: GitGraphProps) {
         });
     });
 
+    const numLanes = Object.keys(branchLanes).length;
     const height = sortedCommits.length * Y_SPACING;
-    const width = Object.keys(branchLanes).length * X_SPACING;
+    const width = numLanes * X_SPACING;
 
     return { nodes: renderedNodes, edges: renderedEdges, branchColorMap: colorMap, graphHeight: height, graphWidth: width };
   }, [repoData]);
