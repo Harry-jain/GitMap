@@ -10,7 +10,8 @@ interface GitGraphProps {
   onCommitSelect: (commit: Commit) => void;
 }
 
-const X_SPACING = 200;
+const X_SPACING_BASE = 200;
+const X_SPACING_MIN = 120;
 const Y_SPACING = 70;
 
 const branchColors = [
@@ -39,9 +40,9 @@ export function GitGraph({ repoData, onCommitSelect }: GitGraphProps) {
     }
   }, []);
   
-  const { nodes, edges, branchColorMap, graphHeight, graphWidth } = useMemo(() => {
+  const { nodes, edges, branchColorMap, graphHeight, graphWidth, xSpacing } = useMemo(() => {
     if (!repoData || repoData.commits.length === 0) {
-      return { nodes: [], edges: [], branchColorMap: {}, graphHeight: 0, graphWidth: 0 };
+      return { nodes: [], edges: [], branchColorMap: {}, graphHeight: 0, graphWidth: 0, xSpacing: X_SPACING_BASE };
     }
 
     const colorMap: BranchColorMap = {};
@@ -54,7 +55,9 @@ export function GitGraph({ repoData, onCommitSelect }: GitGraphProps) {
 
     const commitsBySha: { [sha: string]: Commit } = {};
     repoData.commits.forEach(commit => {
-      commitsBySha[commit.sha] = commit;
+      if (commit.sha) {
+        commitsBySha[commit.sha] = commit;
+      }
     });
 
     const sortedCommits = [...repoData.commits].sort((a, b) => {
@@ -82,18 +85,23 @@ export function GitGraph({ repoData, onCommitSelect }: GitGraphProps) {
         }
     });
 
-    const minLane = Math.min(...Object.values(branchLanes));
+    const minLane = Math.min(0, ...Object.values(branchLanes));
+
+    const numLanes = Object.keys(branchLanes).length;
+    const dynamicXSpacing = Math.max(X_SPACING_MIN, X_SPACING_BASE - (numLanes > 10 ? (numLanes - 10) * 10 : 0));
 
     const positions: { [sha: string]: { x: number; y: number } } = {};
     sortedCommits.forEach((commit, index) => {
-      const lane = branchLanes[commit.branch] ?? 0;
-      positions[commit.sha] = {
-        x: (lane - minLane) * X_SPACING + X_SPACING / 2,
-        y: index * Y_SPACING + Y_SPACING / 2,
-      };
+      if (commit.sha) {
+        const lane = branchLanes[commit.branch] ?? 0;
+        positions[commit.sha] = {
+          x: (lane - minLane) * dynamicXSpacing + dynamicXSpacing / 2,
+          y: index * Y_SPACING + Y_SPACING / 2,
+        };
+      }
     });
     
-    const renderedNodes = sortedCommits.map(commit => ({
+    const renderedNodes = sortedCommits.filter(c => c.sha && positions[c.sha]).map(commit => ({
       ...commit,
       pos: positions[commit.sha],
     }));
@@ -106,7 +114,6 @@ export function GitGraph({ repoData, onCommitSelect }: GitGraphProps) {
           const to = positions[parentSha];
           const color = colorMap[commit.branch] || '#ccc';
 
-          // Use a more pronounced curve, especially for merges
           const curve = Y_SPACING * 0.6;
           let d: string;
           if (from.x === to.x) {
@@ -123,11 +130,10 @@ export function GitGraph({ repoData, onCommitSelect }: GitGraphProps) {
         });
     });
 
-    const numLanes = Object.keys(branchLanes).length;
     const height = sortedCommits.length * Y_SPACING;
-    const width = numLanes * X_SPACING;
+    const width = (Math.max(...Object.values(branchLanes)) - minLane + 1) * dynamicXSpacing;
 
-    return { nodes: renderedNodes, edges: renderedEdges, branchColorMap: colorMap, graphHeight: height, graphWidth: width };
+    return { nodes: renderedNodes, edges: renderedEdges, branchColorMap: colorMap, graphHeight: height, graphWidth: width, xSpacing: dynamicXSpacing };
   }, [repoData]);
   
   const offsetX = Math.max(0, (containerDimensions.width - graphWidth) / 2);
@@ -167,6 +173,7 @@ export function GitGraph({ repoData, onCommitSelect }: GitGraphProps) {
               position={commit.pos}
               color={branchColorMap[commit.branch] || '#ccc'}
               onSelect={onCommitSelect}
+              xSpacing={xSpacing}
             />
           ))}
         </div>

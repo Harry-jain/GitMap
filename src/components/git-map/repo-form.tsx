@@ -29,7 +29,8 @@ export function RepoForm({ onSubmit, isLoading }: RepoFormProps) {
   });
 
   function onFormSubmit(values: z.infer<typeof formSchema>) {
-    onSubmit(values.url);
+    const cleanUrl = values.url.endsWith('.git') ? values.url.slice(0, -4) : values.url;
+    onSubmit(cleanUrl);
   }
 
   return (

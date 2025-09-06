@@ -3,20 +3,21 @@
 import type { Commit } from '@/lib/types';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useId } from 'react';
-import Image from 'next/image';
 import { format, parseISO } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { User } from 'lucide-react';
 import { ScrollArea } from '../ui/scroll-area';
+import { cn } from '@/lib/utils';
 
 interface CommitNodeProps {
   commit: Commit;
   position: { x: number; y: number };
   color: string;
   onSelect: (commit: Commit) => void;
+  xSpacing: number;
 }
 
-export function CommitNode({ commit, position, color, onSelect }: CommitNodeProps) {
+export function CommitNode({ commit, position, color, onSelect, xSpacing }: CommitNodeProps) {
   const id = useId();
   const isMerge = commit.parents.length > 1;
   const commitTitle = (commit.message || 'No commit message').split('\n')[0];
@@ -47,7 +48,7 @@ export function CommitNode({ commit, position, color, onSelect }: CommitNodeProp
               <h4 id={`commit-msg-${id}`} className="font-semibold text-base">{commitTitle}</h4>
               <div className="flex items-center gap-2">
                 <Avatar className="h-8 w-8">
-                  {commit.author?.avatarUrl && <AvatarImage src={commit.author.avatarUrl} alt={commit.author.name} data-ai-hint="person" />}
+                  {commit.author?.avatarUrl && <AvatarImage src={commit.author.avatarUrl} alt={commit.author.name || 'author'} data-ai-hint="person" />}
                   <AvatarFallback><User className="h-4 w-4" /></AvatarFallback>
                 </Avatar>
                 <div>
@@ -69,9 +70,17 @@ export function CommitNode({ commit, position, color, onSelect }: CommitNodeProp
         </Tooltip>
       </TooltipProvider>
       <div 
-        className="absolute -translate-y-1/2 text-xs text-muted-foreground whitespace-nowrap"
-        style={{ left: position.x + 20, top: position.y }}
+        className={cn(
+          "absolute -translate-y-1/2 text-xs text-muted-foreground whitespace-nowrap overflow-hidden text-ellipsis cursor-pointer",
+          "transition-all duration-200"
+        )}
+        style={{ 
+          left: position.x + 20, 
+          top: position.y,
+          maxWidth: xSpacing - 30,
+        }}
         onClick={() => onSelect(commit)}
+        title={commitTitle}
       >
         {commitTitle}
       </div>
