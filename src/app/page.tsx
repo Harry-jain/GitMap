@@ -115,44 +115,37 @@ export default function Home() {
     }
 
     const commitsToShow = new Set<string>();
-    const branchNamesToShow = new Set<string>();
+    let includedBranches = new Set<string>();
 
-    // This logic can be complex. For simplicity, we can filter commits by branch
-    // and then add their parent chains.
     repoData.commits.forEach(commit => {
         if (commit.branch && branchesToShow.has(commit.branch)) {
-            commitsToShow.add(commit.sha);
-            branchNamesToShow.add(commit.branch);
-            
-            let current = commit;
-            while (current.parents.length > 0) {
-                const parent = repoData.commits.find(c => c.sha === current.parents[0]);
-                if (parent) {
-                    commitsToShow.add(parent.sha);
-                    if (parent.branch) branchNamesToShow.add(parent.branch);
-                    current = parent;
+            let current: Commit | undefined = commit;
+            while (current) {
+                if (commitsToShow.has(current.sha)) break;
+                commitsToShow.add(current.sha);
+                if(current.branch) includedBranches.add(current.branch);
+                
+                if (current.parents.length > 0) {
+                    current = repoData.commits.find(c => c.sha === current.parents[0]);
                 } else {
-                    break;
+                    current = undefined;
                 }
             }
         }
     });
 
-    // Ensure all commits for the main branch are included
-     repoData.commits.forEach(commit => {
-        if (commit.branch === mainBranchName) {
-            commitsToShow.add(commit.sha);
-        }
-    });
+    // Ensure all commits for the main branch are included if it's not filtered out
+    if (branchesToShow.has(mainBranchName)) {
+        repoData.commits.forEach(commit => {
+            if (commit.branch === mainBranchName) {
+                commitsToShow.add(commit.sha);
+            }
+        });
+        includedBranches.add(mainBranchName);
+    }
     
     const filteredCommits = repoData.commits.filter(c => commitsToShow.has(c.sha));
-    const filteredBranches = repoData.branches.filter(b => branchNamesToShow.has(b.name));
-    if (!filteredBranches.some(b => b.name === mainBranchName)) {
-        const mainBranch = repoData.branches.find(b => b.name === mainBranchName);
-        if (mainBranch) {
-            filteredBranches.push(mainBranch);
-        }
-    }
+    const filteredBranches = repoData.branches.filter(b => includedBranches.has(b.name));
 
 
     return {

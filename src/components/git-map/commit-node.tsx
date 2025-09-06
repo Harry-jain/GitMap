@@ -28,21 +28,48 @@ export function CommitNode({ commit, position, color, onSelect, xSpacing }: Comm
       <TooltipProvider delayDuration={100}>
         <Tooltip>
           <TooltipTrigger asChild>
-            <button
-              onClick={() => onSelect(commit)}
-              className="absolute -translate-y-1/2 rounded-full focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background transition-transform hover:scale-110"
-              style={{ left: position.x, top: position.y, transform: 'translate(-50%, -50%)' }}
-              aria-labelledby={`commit-msg-${id}`}
-            >
-              <div 
-                className={`w-5 h-5 border-2 bg-clip-padding p-0.5 ${isMerge ? 'rounded-md' : 'rounded-full'}`}
-                style={{ 
-                  backgroundColor: color, 
-                  borderColor: 'hsl(var(--background))',
-                }}
+            <g className="group/commit-node">
+               <foreignObject
+                  x={position.x - 10}
+                  y={position.y - 10}
+                  width={20}
+                  height={20}
+                  className="overflow-visible"
               >
-              </div>
-            </button>
+                <button
+                  onClick={() => onSelect(commit)}
+                  className="absolute rounded-full focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background transition-transform group-hover/commit-node:scale-125"
+                  aria-labelledby={`commit-msg-${id}`}
+                >
+                  <div 
+                    className={`w-5 h-5 border-2 bg-clip-padding p-0.5 ${isMerge ? 'rounded-md' : 'rounded-full'}`}
+                    style={{ 
+                      backgroundColor: color, 
+                      borderColor: 'hsl(var(--background))',
+                    }}
+                  >
+                  </div>
+                </button>
+              </foreignObject>
+              <foreignObject
+                x={position.x + 20}
+                y={position.y - 12}
+                width={xSpacing - 30}
+                height={24}
+                className="overflow-visible"
+              >
+                  <div 
+                    className={cn(
+                      "text-xs text-muted-foreground whitespace-nowrap overflow-hidden text-ellipsis cursor-pointer p-1 rounded-md",
+                      "transition-all duration-200 group-hover/commit-node:font-bold group-hover/commit-node:scale-105"
+                    )}
+                    onClick={() => onSelect(commit)}
+                    title={`${commitTitle} by ${committerName}`}
+                  >
+                    <span className='font-medium'>{committerName}</span>: {commitTitle}
+                  </div>
+              </foreignObject>
+            </g>
           </TooltipTrigger>
           <TooltipContent className="p-4 rounded-lg shadow-xl max-w-sm w-full" side="right" align="start" sideOffset={15}>
             <div className="space-y-3">
@@ -70,21 +97,6 @@ export function CommitNode({ commit, position, color, onSelect, xSpacing }: Comm
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
-      <div 
-        className={cn(
-          "absolute -translate-y-1/2 text-xs text-muted-foreground whitespace-nowrap overflow-hidden text-ellipsis cursor-pointer",
-          "transition-all duration-200"
-        )}
-        style={{ 
-          left: position.x + 20, 
-          top: position.y,
-          maxWidth: xSpacing - 30,
-        }}
-        onClick={() => onSelect(commit)}
-        title={`${commitTitle} by ${committerName}`}
-      >
-        <span className='font-medium'>{committerName}</span>: {commitTitle}
-      </div>
     </>
   );
 }

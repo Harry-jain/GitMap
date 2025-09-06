@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useRef, useEffect, useState } from 'react';
+import React, { useMemo } from 'react';
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import { CommitNode } from './commit-node';
 import type { Commit, RepoData, BranchColorMap } from '@/lib/types';
@@ -132,7 +132,7 @@ export function GitGraph({ repoData, onCommitSelect }: GitGraphProps) {
   }
 
   return (
-    <div className="w-full h-full cursor-grab active:cursor-grabbing">
+    <div className="w-full h-full cursor-grab active:cursor-grabbing bg-dotted-pattern">
       <TransformWrapper
         minScale={0.2}
         limitToBounds={false}
@@ -144,8 +144,7 @@ export function GitGraph({ repoData, onCommitSelect }: GitGraphProps) {
             wrapperStyle={{ width: '100%', height: '100%'}}
             contentStyle={{ width: graphWidth, height: graphHeight }}
         >
-          <div className="relative" style={{ width: graphWidth, height: graphHeight }}>
-              <svg width={graphWidth} height={graphHeight} className="absolute top-0 left-0 pointer-events-none">
+              <svg width={graphWidth} height={graphHeight} className="pointer-events-none">
                 <defs>
                   {Object.entries(branchColorMap).map(([name, color]) => (
                     <linearGradient key={name} id={`grad-${name.replace(/[^a-zA-Z0-9]/g, '-')}`}>
@@ -154,28 +153,31 @@ export function GitGraph({ repoData, onCommitSelect }: GitGraphProps) {
                     </linearGradient>
                   ))}
                 </defs>
-                {edges.map(edge => (
-                  <path
-                    key={edge.id}
-                    d={edge.d}
-                    fill="none"
-                    stroke={edge.color}
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                  />
-                ))}
+                <g>
+                  {edges.map(edge => (
+                    <path
+                      key={edge.id}
+                      d={edge.d}
+                      fill="none"
+                      stroke={edge.color}
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                    />
+                  ))}
+                </g>
+                <g>
+                  {nodes.map(commit => (
+                    <CommitNode
+                      key={commit.sha}
+                      commit={commit}
+                      position={commit.pos}
+                      color={branchColorMap[commit.branch] || '#ccc'}
+                      onSelect={onCommitSelect}
+                      xSpacing={xSpacing}
+                    />
+                  ))}
+                </g>
               </svg>
-              {nodes.map(commit => (
-                <CommitNode
-                  key={commit.sha}
-                  commit={commit}
-                  position={commit.pos}
-                  color={branchColorMap[commit.branch] || '#ccc'}
-                  onSelect={onCommitSelect}
-                  xSpacing={xSpacing}
-                />
-              ))}
-          </div>
         </TransformComponent>
       </TransformWrapper>
     </div>
