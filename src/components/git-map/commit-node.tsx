@@ -21,6 +21,7 @@ export function CommitNode({ commit, position, color, onSelect, xSpacing }: Comm
   const id = useId();
   const isMerge = commit.parents.length > 1;
   const commitTitle = (commit.message || 'No commit message').split('\n')[0];
+  const committerName = commit.author?.name || 'Unknown';
 
   return (
     <>
@@ -52,7 +53,7 @@ export function CommitNode({ commit, position, color, onSelect, xSpacing }: Comm
                   <AvatarFallback><User className="h-4 w-4" /></AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="text-sm font-medium">{commit.author?.name || 'Unknown Author'}</p>
+                  <p className="text-sm font-medium">{committerName}</p>
                   {commit.author?.date ? (
                     <p className="text-xs text-muted-foreground">{format(parseISO(commit.author.date), "PPP p")}</p>
                   ) : (
@@ -80,9 +81,9 @@ export function CommitNode({ commit, position, color, onSelect, xSpacing }: Comm
           maxWidth: xSpacing - 30,
         }}
         onClick={() => onSelect(commit)}
-        title={commitTitle}
+        title={`${commitTitle} by ${committerName}`}
       >
-        {commitTitle}
+        <span className='font-medium'>{committerName}</span>: {commitTitle}
       </div>
     </>
   );

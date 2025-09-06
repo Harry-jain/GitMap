@@ -1,18 +1,18 @@
 "use client";
 
 import React, { useMemo, useRef, useEffect, useState } from 'react';
+import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import { CommitNode } from './commit-node';
 import type { Commit, RepoData, BranchColorMap } from '@/lib/types';
-import { ScrollArea } from '../ui/scroll-area';
 
 interface GitGraphProps {
   repoData: RepoData;
   onCommitSelect: (commit: Commit) => void;
 }
 
-const X_SPACING_BASE = 200;
-const X_SPACING_MIN = 120;
-const Y_SPACING = 70;
+const X_SPACING_BASE = 250;
+const X_SPACING_MIN = 150;
+const Y_SPACING = 80;
 
 const branchColors = [
   '#4c8bf5', // blue
@@ -101,9 +101,7 @@ export function GitGraph({ repoData, onCommitSelect }: GitGraphProps) {
           const to = positions[parentSha];
           const color = colorMap[commit.branch] || '#ccc';
           
-          const isMergeFromMain = (commitsBySha[parentSha]?.branch === mainBranchName) && (commit.branch !== mainBranchName);
-
-          const curve = Y_SPACING * 0.6;
+          const curve = Y_SPACING * 0.7;
           let d: string;
           if (from.x === to.x) {
             d = `M ${from.x} ${from.y} L ${to.x} ${to.y}`;
@@ -134,39 +132,52 @@ export function GitGraph({ repoData, onCommitSelect }: GitGraphProps) {
   }
 
   return (
-    <ScrollArea className="w-full h-full">
-        <div className="relative" style={{ width: graphWidth, height: graphHeight }}>
-            <svg width={graphWidth} height={graphHeight} className="absolute top-0 left-0 pointer-events-none">
-              <defs>
-                {Object.entries(branchColorMap).map(([name, color]) => (
-                  <linearGradient key={name} id={`grad-${name.replace(/[^a-zA-Z0-9]/g, '-')}`}>
-                    <stop offset="0%" stopColor={color} stopOpacity="0" />
-                    <stop offset="100%" stopColor={color} stopOpacity="1" />
-                  </linearGradient>
+    <div className="w-full h-full cursor-grab active:cursor-grabbing">
+      <TransformWrapper
+        minScale={0.2}
+        limitToBounds={false}
+        initialScale={1}
+        initialPositionX={0}
+        initialPositionY={0}
+      >
+        <TransformComponent
+            wrapperStyle={{ width: '100%', height: '100%'}}
+            contentStyle={{ width: graphWidth, height: graphHeight }}
+        >
+          <div className="relative" style={{ width: graphWidth, height: graphHeight }}>
+              <svg width={graphWidth} height={graphHeight} className="absolute top-0 left-0 pointer-events-none">
+                <defs>
+                  {Object.entries(branchColorMap).map(([name, color]) => (
+                    <linearGradient key={name} id={`grad-${name.replace(/[^a-zA-Z0-9]/g, '-')}`}>
+                      <stop offset="0%" stopColor={color} stopOpacity="0" />
+                      <stop offset="100%" stopColor={color} stopOpacity="1" />
+                    </linearGradient>
+                  ))}
+                </defs>
+                {edges.map(edge => (
+                  <path
+                    key={edge.id}
+                    d={edge.d}
+                    fill="none"
+                    stroke={edge.color}
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                  />
                 ))}
-              </defs>
-              {edges.map(edge => (
-                <path
-                  key={edge.id}
-                  d={edge.d}
-                  fill="none"
-                  stroke={edge.color}
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
+              </svg>
+              {nodes.map(commit => (
+                <CommitNode
+                  key={commit.sha}
+                  commit={commit}
+                  position={commit.pos}
+                  color={branchColorMap[commit.branch] || '#ccc'}
+                  onSelect={onCommitSelect}
+                  xSpacing={xSpacing}
                 />
               ))}
-            </svg>
-            {nodes.map(commit => (
-              <CommitNode
-                key={commit.sha}
-                commit={commit}
-                position={commit.pos}
-                color={branchColorMap[commit.branch] || '#ccc'}
-                onSelect={onCommitSelect}
-                xSpacing={xSpacing}
-              />
-            ))}
-        </div>
-    </ScrollArea>
+          </div>
+        </TransformComponent>
+      </TransformWrapper>
+    </div>
   );
 }
