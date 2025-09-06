@@ -1,4 +1,4 @@
-import type { RepoData } from './types';
+import type { RepoData, Commit } from './types';
 
 // A simple deterministic hash function for generating SHAs
 const hashCode = (str: string) => {
@@ -29,7 +29,7 @@ const nextDate = () => {
 
 const c1Date = nextDate();
 const c1Sha = generateSha('Initial commit', c1Date, []);
-const c1 = { sha: c1Sha, message: 'Initial commit\n\n- Setup project structure\n- Add basic configuration', author: authors[0], date: c1Date, parents: [], branch: 'main', diff: `
+const c1: Commit = { sha: c1Sha, message: 'Initial commit\n\n- Setup project structure\n- Add basic configuration', author: authors[0], date: c1Date, parents: [], branch: 'main', diff: `
 diff --git a/package.json b/package.json
 new file mode 100644
 index 0000000..e69de29
@@ -52,19 +52,19 @@ index 0000000..e69de29
 
 const c2Date = nextDate();
 const c2Sha = generateSha('Add README', c2Date, [c1Sha]);
-const c2 = { sha: c2Sha, message: 'feat: Add README file', author: authors[0], date: c2Date, parents: [c1Sha], branch: 'main', diff: `
+const c2: Commit = { sha: c2Sha, message: 'feat: Add README file', author: authors[0], date: c2Date, parents: [c1Sha], branch: 'main', diff: `
 diff --git a/README.md b/README.md
 new file mode 100644
 index 0000000..d3b5b49
 --- /dev/null
 +++ b/README.md
-@@ -0,0 +1 @@
+@@ -0,0 +1,1 @@
 +# GitMap Example
 ` };
 
 const c3Date = nextDate();
 const c3Sha = generateSha('Start feature A', c3Date, [c2Sha]);
-const c3 = { sha: c3Sha, message: 'feat(sidebar): Start feature A\n\n- Add sidebar component', author: authors[1], date: c3Date, parents: [c2Sha], branch: 'feature/sidebar', diff: `
+const c3: Commit = { sha: c3Sha, message: 'feat(sidebar): Start feature A\n\n- Add sidebar component', author: authors[1], date: c3Date, parents: [c2Sha], branch: 'feature/sidebar', diff: `
 diff --git a/src/components/Sidebar.js b/src/components/Sidebar.js
 new file mode 100644
 index 0000000..a1b2c3d
@@ -80,7 +80,7 @@ index 0000000..a1b2c3d
 
 const c4Date = nextDate();
 const c4Sha = generateSha('Update styles', c4Date, [c2Sha]);
-const c4 = { sha: c4Sha, message: 'style: Update button styles', author: authors[0], date: c4Date, parents: [c2Sha], branch: 'main', diff: `
+const c4: Commit = { sha: c4Sha, message: 'style: Update button styles', author: authors[0], date: c4Date, parents: [c2Sha], branch: 'main', diff: `
 diff --git a/src/styles/buttons.css b/src/styles/buttons.css
 new file mode 100644
 index 0000000..f9e8d7c
@@ -94,7 +94,7 @@ index 0000000..f9e8d7c
 
 const c5Date = nextDate();
 const c5Sha = generateSha('Implement API call', c5Date, [c3Sha]);
-const c5 = { sha: c5Sha, message: 'feat(sidebar): Implement API call for user data', author: authors[1], date: c5Date, parents: [c3Sha], branch: 'feature/sidebar', diff: `
+const c5: Commit = { sha: c5Sha, message: 'feat(sidebar): Implement API call for user data', author: authors[1], date: c5Date, parents: [c3Sha], branch: 'feature/sidebar', diff: `
 diff --git a/src/components/Sidebar.js b/src/components/Sidebar.js
 index a1b2c3d..b4c5d6e
 --- a/src/components/Sidebar.js
@@ -114,7 +114,7 @@ index a1b2c3d..b4c5d6e
 
 const c6Date = nextDate();
 const c6Sha = generateSha('Add login form', c6Date, [c4Sha]);
-const c6 = { sha: c6Sha, message: 'feat(auth): Add login form', author: authors[2], date: c6Date, parents: [c4Sha], branch: 'feature/login', diff: `
+const c6: Commit = { sha: c6Sha, message: 'feat(auth): Add login form', author: authors[2], date: c6Date, parents: [c4Sha], branch: 'feature/login', diff: `
 diff --git a/src/components/LoginForm.js b/src/components/LoginForm.js
 new file mode 100644
 index 0000000..e7f8g9h
@@ -130,11 +130,11 @@ index 0000000..e7f8g9h
 
 const c7Date = nextDate();
 const c7Sha = generateSha('Merge feature/sidebar', c7Date, [c4Sha, c5Sha]);
-const c7 = { sha: c7Sha, message: 'Merge pull request #12 from feature/sidebar\n\nFeat(sidebar): Complete sidebar implementation', author: authors[0], date: c7Date, parents: [c4Sha, c5Sha], branch: 'main', diff: '... merge sidebar diff ...' };
+const c7: Commit = { sha: c7Sha, message: 'Merge pull request #12 from feature/sidebar\n\nFeat(sidebar): Complete sidebar implementation', author: authors[0], date: c7Date, parents: [c4Sha, c5Sha], branch: 'main', diff: '... merge sidebar diff ...' };
 
 const c8Date = nextDate();
 const c8Sha = generateSha('Fix login bug', c8Date, [c6Sha]);
-const c8 = { sha: c8Sha, message: 'fix(auth): Fix validation bug in login form', author: authors[2], date: c8Date, parents: [c6Sha], branch: 'feature/login', diff: `
+const c8: Commit = { sha: c8Sha, message: 'fix(auth): Fix validation bug in login form', author: authors[2], date: c8Date, parents: [c6Sha], branch: 'feature/login', diff: `
 diff --git a/src/components/LoginForm.js b/src/components/LoginForm.js
 index e7f8g9h..f1g2h3i4
 --- a/src/components/LoginForm.js
@@ -151,23 +151,26 @@ index e7f8g9h..f1g2h3i4
 
 const c9Date = nextDate();
 const c9Sha = generateSha('Refactor auth service', c9Date, [c8Sha]);
-const c9 = { sha: c9Sha, message: 'refactor(auth): Refactor auth service to use classes', author: authors[2], date: c9Date, parents: [c8Sha], branch: 'feature/login', diff: '... auth refactor diff ...' };
+const c9: Commit = { sha: c9Sha, message: 'refactor(auth): Refactor auth service to use classes', author: authors[2], date: c9Date, parents: [c8Sha], branch: 'feature/login', diff: '... auth refactor diff ...' };
 
 const c10Date = nextDate();
 const c10Sha = generateSha('Merge feature/login', c10Date, [c7Sha, c9Sha]);
-const c10 = { sha: c10Sha, message: 'Merge pull request #23 from feature/login\n\nFeat(auth): Login functionality', author: authors[0], date: c10Date, parents: [c7Sha, c9Sha], branch: 'main', diff: '... merge login diff ...' };
+const c10: Commit = { sha: c10Sha, message: 'Merge pull request #23 from feature/login\n\nFeat(auth): Login functionality', author: authors[0], date: c10Date, parents: [c7Sha, c9Sha], branch: 'main', diff: '... merge login diff ...' };
 
 const c11Date = nextDate();
 const c11Sha = generateSha('Release v1.0.0', c11Date, [c10Sha]);
-const c11 = { sha: c11Sha, message: 'chore: Release v1.0.0', author: authors[0], date: c11Date, parents: [c10Sha], branch: 'main', diff: '... release diff ...' };
+const c11: Commit = { sha: c11Sha, message: 'chore: Release v1.0.0', author: authors[0], date: c11Date, parents: [c10Sha], branch: 'main', diff: '... release diff ...' };
+
+const c12: Commit = { sha: 'badsha1', message: null, author: null, date: null, parents: [c11Sha], branch: 'main' };
+
 
 const mockRepoData: RepoData = {
   branches: [
-    { name: 'main', lastCommitSha: c11Sha },
+    { name: 'main', lastCommitSha: 'badsha1' },
     { name: 'feature/sidebar', lastCommitSha: c5Sha },
     { name: 'feature/login', lastCommitSha: c9Sha },
   ],
-  commits: [c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11],
+  commits: [c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12],
 };
 
 export const fetchRepoData = (url: string): Promise<RepoData> => {

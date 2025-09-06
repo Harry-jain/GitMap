@@ -47,12 +47,16 @@ export function CommitNode({ commit, position, color, onSelect }: CommitNodeProp
               <h4 id={`commit-msg-${id}`} className="font-semibold text-base">{commitTitle}</h4>
               <div className="flex items-center gap-2">
                 <Avatar className="h-8 w-8">
-                  {commit.author.avatarUrl && <AvatarImage src={commit.author.avatarUrl} alt={commit.author.name} data-ai-hint="person" />}
+                  {commit.author?.avatarUrl && <AvatarImage src={commit.author.avatarUrl} alt={commit.author.name} data-ai-hint="person" />}
                   <AvatarFallback><User className="h-4 w-4" /></AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="text-sm font-medium">{commit.author.name}</p>
-                  <p className="text-xs text-muted-foreground">{format(parseISO(commit.author.date), "PPP p")}</p>
+                  <p className="text-sm font-medium">{commit.author?.name || 'Unknown Author'}</p>
+                  {commit.author?.date ? (
+                    <p className="text-xs text-muted-foreground">{format(parseISO(commit.author.date), "PPP p")}</p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">No date</p>
+                  )}
                 </div>
               </div>
               <ScrollArea className="h-32 w-full">

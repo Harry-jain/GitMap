@@ -67,7 +67,7 @@ export function CommitDetails({ commit, isOpen, onClose }: CommitDetailsProps) {
               <div className="p-6 space-y-6">
                 <div>
                   <h3 className="text-lg font-semibold mb-2">Message</h3>
-                  <div className="text-sm bg-muted p-4 rounded-lg whitespace-pre-wrap font-code">{commit.message}</div>
+                  <div className="text-sm bg-muted p-4 rounded-lg whitespace-pre-wrap font-code">{commit.message || 'No commit message.'}</div>
                 </div>
                 
                 <Separator />
@@ -77,14 +77,18 @@ export function CommitDetails({ commit, isOpen, onClose }: CommitDetailsProps) {
                     <User className="h-4 w-4 mt-0.5 text-muted-foreground" />
                     <div>
                       <span className="font-medium">Author:</span>
-                      <span className="ml-2">{commit.author.name} &lt;{commit.author.email}&gt;</span>
+                      <span className="ml-2">{commit.author?.name || 'Unknown'} &lt;{commit.author?.email || 'no-email'}&gt;</span>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
                     <Calendar className="h-4 w-4 mt-0.5 text-muted-foreground" />
                     <div>
                       <span className="font-medium">Date:</span>
-                      <span className="ml-2">{format(parseISO(commit.author.date), "PPP p")}</span>
+                      {commit.author?.date ? (
+                        <span className="ml-2">{format(parseISO(commit.author.date), "PPP p")}</span>
+                      ) : (
+                        <span className="ml-2">No date</span>
+                      )}
                     </div>
                   </div>
                    <div className="flex items-start gap-3">
@@ -110,7 +114,7 @@ export function CommitDetails({ commit, isOpen, onClose }: CommitDetailsProps) {
                   ) : (
                     <div className="text-center border-2 border-dashed rounded-lg p-6 space-y-3">
                       <p className="text-sm text-muted-foreground">Get a quick summary of this commit's changes with AI.</p>
-                       <Button onClick={handleGenerateSummary} disabled={isSummaryLoading} size="sm">
+                       <Button onClick={handleGenerateSummary} disabled={isSummaryLoading || !commit.message} size="sm">
                          {isSummaryLoading ? 'Generating...' : 'Generate AI Summary'}
                        </Button>
                        {isSummaryLoading && (
