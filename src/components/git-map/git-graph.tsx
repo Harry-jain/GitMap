@@ -101,15 +101,19 @@ export function GitGraph({ repoData, onCommitSelect }: GitGraphProps) {
           const to = positions[parentSha];
           const color = colorMap[commit.branch] || '#ccc';
           
-          const curve = Y_SPACING * 0.7;
           let d: string;
           if (from.x === to.x) {
             d = `M ${from.x} ${from.y} L ${to.x} ${to.y}`;
           } else {
-             const cp1x = from.x;
-             const cp1y = from.y - curve;
-             const cp2x = to.x;
-             const cp2y = to.y + curve;
+             const dx = from.x - to.x;
+             const dy = from.y - to.y;
+             const curveX = dx * 0.3;
+             const curveY = dy * 0.2;
+
+             const cp1x = from.x - curveX;
+             const cp1y = from.y - curveY;
+             const cp2x = to.x + curveX;
+             const cp2y = to.y + curveY;
              d = `M ${from.x} ${from.y} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${to.x} ${to.y}`;
           }
 
