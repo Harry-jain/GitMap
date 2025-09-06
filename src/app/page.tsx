@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
-import { GitBranch, GitCommit, Github, Loader } from 'lucide-react';
+import { GitBranch, GitCommit, Github, Loader, PanelLeft } from 'lucide-react';
 import type { RepoData, Commit, Branch } from '@/lib/types';
 import { fetchRepoData } from '@/lib/actions';
 import { RepoForm } from '@/components/git-map/repo-form';
@@ -11,8 +11,19 @@ import { Filters } from '@/components/git-map/filters';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { RepoHistory } from '@/components/git-map/history';
+import {
+  SidebarProvider,
+  Sidebar,
+  SidebarTrigger,
+  SidebarContent,
+  SidebarHeader,
+  SidebarInset,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupLabel
+} from '@/components/ui/sidebar';
 
-const MAX_HISTORY = 5;
+const MAX_HISTORY = 10;
 const BRANCH_PAGE_SIZE = 10;
 
 export default function Home() {
@@ -134,7 +145,6 @@ export default function Home() {
         }
     });
 
-    // Ensure all commits for the main branch are included if it's not filtered out
     if (branchesToShow.has(mainBranchName)) {
         repoData.commits.forEach(commit => {
             if (commit.branch === mainBranchName) {
@@ -156,79 +166,90 @@ export default function Home() {
   }, [repoData, branchFilter, branchPage, mainBranchName]);
 
   return (
-    <div className="flex h-screen w-full bg-background text-foreground">
-      <main className="flex flex-1 flex-col">
-        <header className="flex h-16 shrink-0 items-center justify-between border-b bg-card px-4 md:px-6">
-          <div className="flex items-center gap-3">
-            <GitBranch className="h-6 w-6 text-primary" />
-            <h1 className="text-xl font-semibold font-headline">GitMap</h1>
-          </div>
-          <div className="flex-1 max-w-2xl">
-            <RepoForm onSubmit={handleFetchRepo} isLoading={isLoading} />
-          </div>
-          <Button variant="ghost" size="icon" asChild>
-            <a href="https://github.com/firebase/studio" target="_blank" rel="noopener noreferrer">
-              <Github className="h-5 w-5" />
-            </a>
-          </Button>
-        </header>
+    <SidebarProvider>
+      <Sidebar>
+        <SidebarContent className="p-0">
+          <SidebarHeader className="p-4">
+             <div className="flex items-center gap-3">
+              <GitBranch className="h-6 w-6 text-sidebar-primary" />
+              <h1 className="text-xl font-semibold font-headline text-sidebar-primary-foreground">GitMap</h1>
+            </div>
+          </SidebarHeader>
+          <SidebarGroup className="p-4 pt-0">
+             <RepoHistory
+                repoHistory={repoHistory}
+                onSelectRepo={handleFetchRepo}
+                onClearHistory={clearHistory}
+              />
+          </SidebarGroup>
+        </SidebarContent>
+        <SidebarFooter className="p-4 mt-auto">
+            <Button variant="ghost" size="icon" asChild>
+              <a href="https://github.com/firebase/studio" target="_blank" rel="noopener noreferrer" className="text-sidebar-foreground hover:text-sidebar-accent-foreground">
+                <Github className="h-5 w-5" />
+              </a>
+            </Button>
+        </SidebarFooter>
+      </Sidebar>
+      <SidebarInset>
+        <div className="flex h-screen w-full bg-background text-foreground flex-col">
+          <header className="flex h-16 shrink-0 items-center justify-between border-b bg-card px-4 md:px-6">
+            <SidebarTrigger className="md:hidden"/>
+            <div className="flex-1 max-w-2xl ml-4">
+              <RepoForm onSubmit={handleFetchRepo} isLoading={isLoading} />
+            </div>
+          </header>
 
-        <div className="flex flex-1 overflow-hidden">
-          <div className="flex-1 flex flex-col overflow-auto p-4 md:p-6">
-            {isLoading && (
-              <div className="flex flex-1 items-center justify-center">
-                <Loader className="h-12 w-12 animate-spin text-primary" />
-              </div>
-            )}
-            {!isLoading && !repoData && !error && (
-              <div className="flex flex-1 items-center justify-center">
-                <div className="text-center max-w-md">
-                  <GitCommit className="mx-auto h-12 w-12 text-muted-foreground" />
-                  <h2 className="mt-4 text-2xl font-semibold">Visualize a Repository</h2>
-                  <p className="mt-2 text-muted-foreground">
-                    Enter a GitHub repository URL above to see its branch structure.
-                  </p>
-                  <div className="mt-8">
-                    <RepoHistory
-                      repoHistory={repoHistory}
-                      onSelectRepo={handleFetchRepo}
-                      onClearHistory={clearHistory}
-                    />
+          <div className="flex flex-1 overflow-hidden">
+            <div className="flex-1 flex flex-col overflow-auto p-4 md:p-6">
+              {isLoading && (
+                <div className="flex flex-1 items-center justify-center">
+                  <Loader className="h-12 w-12 animate-spin text-primary" />
+                </div>
+              )}
+              {!isLoading && !repoData && !error && (
+                <div className="flex flex-1 items-center justify-center">
+                  <div className="text-center max-w-md">
+                    <GitCommit className="mx-auto h-12 w-12 text-muted-foreground" />
+                    <h2 className="mt-4 text-2xl font-semibold">Visualize a Repository</h2>
+                    <p className="mt-2 text-muted-foreground">
+                      Enter a GitHub repository URL above to see its branch structure.
+                    </p>
                   </div>
                 </div>
-              </div>
-            )}
-            {repoData && !isLoading && (
-              <>
-                <div className="mb-4 shrink-0">
-                  <Filters 
-                    allBranches={repoData.branches.filter(b => b.name !== mainBranchName)}
-                    selectedBranch={branchFilter}
-                    onFilterChange={handleFilterChange}
-                    mainBranchName={mainBranchName}
-                    branchPage={branchPage}
-                    onPageChange={handleBranchPageChange}
-                    pageSize={BRANCH_PAGE_SIZE}
-                    totalBranches={repoData.branches.length - 1}
-                  />
-                </div>
-                <div className="flex-1 relative min-h-0 bg-muted/20 rounded-lg border">
-                  <GitGraph 
-                    repoData={filteredRepoData ?? { commits: [], branches: [] }}
-                    onCommitSelect={handleCommitSelect} 
-                  />
-                </div>
-              </>
-            )}
-          </div>
+              )}
+              {repoData && !isLoading && (
+                <>
+                  <div className="mb-4 shrink-0">
+                    <Filters 
+                      allBranches={repoData.branches.filter(b => b.name !== mainBranchName)}
+                      selectedBranch={branchFilter}
+                      onFilterChange={handleFilterChange}
+                      mainBranchName={mainBranchName}
+                      branchPage={branchPage}
+                      onPageChange={handleBranchPageChange}
+                      pageSize={BRANCH_PAGE_SIZE}
+                      totalBranches={repoData.branches.length - 1}
+                    />
+                  </div>
+                  <div className="flex-1 relative min-h-0 bg-muted/20 rounded-lg border">
+                    <GitGraph 
+                      repoData={filteredRepoData ?? { commits: [], branches: [] }}
+                      onCommitSelect={handleCommitSelect} 
+                    />
+                  </div>
+                </>
+              )}
+            </div>
 
-          <CommitDetails
-            commit={selectedCommit}
-            isOpen={!!selectedCommit}
-            onClose={() => setSelectedCommit(null)}
-          />
+            <CommitDetails
+              commit={selectedCommit}
+              isOpen={!!selectedCommit}
+              onClose={() => setSelectedCommit(null)}
+            />
+          </div>
         </div>
-      </main>
-    </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }
