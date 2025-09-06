@@ -38,7 +38,7 @@ export function CommitNode({ commit, position, color, onSelect, xSpacing }: Comm
               >
                 <button
                   onClick={() => onSelect(commit)}
-                  className="absolute rounded-full focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background transition-transform group-hover/commit-node:scale-125"
+                  className="absolute rounded-full focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background transition-transform duration-300 ease-in-out group-hover/commit-node:scale-125 cursor-pointer"
                   aria-labelledby={`commit-msg-${id}`}
                 >
                   <div 
@@ -60,8 +60,8 @@ export function CommitNode({ commit, position, color, onSelect, xSpacing }: Comm
               >
                   <div 
                     className={cn(
-                      "text-xs text-muted-foreground whitespace-nowrap overflow-hidden text-ellipsis cursor-pointer p-1 rounded-md",
-                      "transition-all duration-200 group-hover/commit-node:font-bold group-hover/commit-node:scale-105"
+                      "text-xs text-muted-foreground whitespace-nowrap overflow-hidden text-ellipsis p-1 rounded-md cursor-pointer origin-left",
+                      "transition-all duration-300 ease-in-out group-hover/commit-node:font-bold group-hover/commit-node:scale-110"
                     )}
                     onClick={() => onSelect(commit)}
                     title={`${commitTitle} by ${committerName}`}
