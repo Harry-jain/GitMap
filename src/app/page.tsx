@@ -13,13 +13,15 @@ import { useToast } from '@/hooks/use-toast';
 import { RepoHistory } from '@/components/git-map/history';
 
 const MAX_HISTORY = 5;
+const BRANCH_PAGE_SIZE = 10;
 
 export default function Home() {
   const [repoData, setRepoData] = useState<RepoData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedCommit, setSelectedCommit] = useState<Commit | null>(null);
-  const [selectedBranch, setSelectedBranch] = useState<string>('all');
+  const [branchFilter, setBranchFilter] = useState<string>('all');
+  const [branchPage, setBranchPage] = useState(1);
   const [repoHistory, setRepoHistory] = useState<string[]>([]);
   const { toast } = useToast();
 
@@ -68,7 +70,8 @@ export default function Home() {
     try {
       const data = await fetchRepoData(url);
       setRepoData(data);
-      setSelectedBranch('all');
+      setBranchFilter('all');
+      setBranchPage(1);
       updateHistory(url);
     } catch (err) {
       const errorMessage = 'Failed to fetch repository data. Please check the URL and try again.';
@@ -89,32 +92,44 @@ export default function Home() {
   };
   
   const handleFilterChange = (branch: string) => {
-    setSelectedBranch(branch);
+    setBranchFilter(branch);
+  };
+  
+  const handleBranchPageChange = (page: number) => {
+    setBranchPage(page);
   };
 
   const filteredRepoData = useMemo(() => {
     if (!repoData) return null;
 
-    if (selectedBranch === 'all') {
-      return repoData;
+    const branchesToShow = new Set<string>([mainBranchName]);
+    if (branchFilter === 'all') {
+      const start = (branchPage - 1) * BRANCH_PAGE_SIZE;
+      const end = start + BRANCH_PAGE_SIZE;
+      repoData.branches
+        .filter(b => b.name !== mainBranchName)
+        .slice(start, end)
+        .forEach(b => branchesToShow.add(b.name));
+    } else {
+      branchesToShow.add(branchFilter);
     }
 
-    const visibleBranchesSet = new Set([mainBranchName, selectedBranch]);
-
     const commitsToShow = new Set<string>();
-    const branchesToShow = new Set<string>();
+    const branchNamesToShow = new Set<string>();
 
+    // This logic can be complex. For simplicity, we can filter commits by branch
+    // and then add their parent chains.
     repoData.commits.forEach(commit => {
-        if (commit.branch && visibleBranchesSet.has(commit.branch)) {
+        if (commit.branch && branchesToShow.has(commit.branch)) {
             commitsToShow.add(commit.sha);
-            branchesToShow.add(commit.branch);
+            branchNamesToShow.add(commit.branch);
             
             let current = commit;
             while (current.parents.length > 0) {
                 const parent = repoData.commits.find(c => c.sha === current.parents[0]);
                 if (parent) {
                     commitsToShow.add(parent.sha);
-                    if(parent.branch) branchesToShow.add(parent.branch);
+                    if (parent.branch) branchNamesToShow.add(parent.branch);
                     current = parent;
                 } else {
                     break;
@@ -122,16 +137,30 @@ export default function Home() {
             }
         }
     });
+
+    // Ensure all commits for the main branch are included
+     repoData.commits.forEach(commit => {
+        if (commit.branch === mainBranchName) {
+            commitsToShow.add(commit.sha);
+        }
+    });
     
     const filteredCommits = repoData.commits.filter(c => commitsToShow.has(c.sha));
-    const filteredBranches = repoData.branches.filter(b => branchesToShow.has(b.name));
+    const filteredBranches = repoData.branches.filter(b => branchNamesToShow.has(b.name));
+    if (!filteredBranches.some(b => b.name === mainBranchName)) {
+        const mainBranch = repoData.branches.find(b => b.name === mainBranchName);
+        if (mainBranch) {
+            filteredBranches.push(mainBranch);
+        }
+    }
+
 
     return {
         ...repoData,
         commits: filteredCommits,
         branches: filteredBranches,
     };
-  }, [repoData, selectedBranch, mainBranchName]);
+  }, [repoData, branchFilter, branchPage, mainBranchName]);
 
   return (
     <div className="flex h-screen w-full bg-background text-foreground">
@@ -181,12 +210,16 @@ export default function Home() {
                 <div className="mb-4 shrink-0">
                   <Filters 
                     allBranches={repoData.branches.filter(b => b.name !== mainBranchName)}
-                    selectedBranch={selectedBranch}
+                    selectedBranch={branchFilter}
                     onFilterChange={handleFilterChange}
                     mainBranchName={mainBranchName}
+                    branchPage={branchPage}
+                    onPageChange={handleBranchPageChange}
+                    pageSize={BRANCH_PAGE_SIZE}
+                    totalBranches={repoData.branches.length - 1}
                   />
                 </div>
-                <div className="flex-1 relative min-h-0 flex items-center justify-center">
+                <div className="flex-1 relative min-h-0 bg-muted/20 rounded-lg border">
                   <GitGraph 
                     repoData={filteredRepoData ?? { commits: [], branches: [] }}
                     onCommitSelect={handleCommitSelect} 
