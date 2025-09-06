@@ -26,11 +26,11 @@ export function CommitNode({ commit, position, color, onSelect, xSpacing }: Comm
   return (
     <TooltipProvider delayDuration={100}>
       <Tooltip>
-        <TooltipTrigger asChild>
-          <g 
-            className="group/commit-node"
-            onClick={() => onSelect(commit)}
-          >
+        <g 
+          className="group/commit-node"
+          onClick={() => onSelect(commit)}
+        >
+          <TooltipTrigger asChild>
             <foreignObject
                 x={position.x - 10}
                 y={position.y - 10}
@@ -52,6 +52,8 @@ export function CommitNode({ commit, position, color, onSelect, xSpacing }: Comm
                 </div>
               </div>
             </foreignObject>
+          </TooltipTrigger>
+           <TooltipTrigger asChild>
             <foreignObject
               x={position.x + 20}
               y={position.y - 12}
@@ -64,13 +66,14 @@ export function CommitNode({ commit, position, color, onSelect, xSpacing }: Comm
                     "text-xs text-muted-foreground whitespace-nowrap overflow-hidden text-ellipsis p-1 rounded-md origin-left",
                     "transition-all duration-300 ease-in-out group-hover/commit-node:font-bold group-hover/commit-node:scale-110"
                   )}
+                  style={{ width: 'max-content' }}
                   title={`${commitTitle} by ${committerName}`}
                 >
                   <span className='font-medium'>{committerName}</span>: {commitTitle}
                 </div>
             </foreignObject>
-          </g>
-        </TooltipTrigger>
+          </TooltipTrigger>
+        </g>
         <TooltipContent className="p-4 rounded-lg shadow-xl max-w-sm w-full" side="right" align="start" sideOffset={15}>
           <div className="space-y-3">
             <h4 id={`commit-msg-${id}`} className="font-semibold text-base">{commitTitle}</h4>
