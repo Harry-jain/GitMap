@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { GitBranch, GitCommit, Github, Loader } from 'lucide-react';
 import type { RepoData, Commit, Branch } from '@/lib/types';
-import { fetchRepoData } from '@/lib/mock-data';
+import { fetchRepoData } from '@/lib/actions';
 import { RepoForm } from '@/components/git-map/repo-form';
 import { GitGraph } from '@/components/git-map/git-graph';
 import { CommitDetails } from '@/components/git-map/commit-details';
