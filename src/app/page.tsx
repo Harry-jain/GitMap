@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { GitBranch, GitCommit, Github, Loader } from 'lucide-react';
 import type { RepoData, Commit, Branch } from '@/lib/types';
 import { fetchRepoData } from '@/lib/mock-data';
@@ -10,6 +10,9 @@ import { CommitDetails } from '@/components/git-map/commit-details';
 import { Filters } from '@/components/git-map/filters';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { RepoHistory } from '@/components/git-map/history';
+
+const MAX_HISTORY = 5;
 
 export default function Home() {
   const [repoData, setRepoData] = useState<RepoData | null>(null);
@@ -17,10 +20,45 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [selectedCommit, setSelectedCommit] = useState<Commit | null>(null);
   const [selectedBranch, setSelectedBranch] = useState<string>('all');
+  const [repoHistory, setRepoHistory] = useState<string[]>([]);
   const { toast } = useToast();
 
+  useEffect(() => {
+    try {
+      const storedHistory = localStorage.getItem('gitmap_history');
+      if (storedHistory) {
+        setRepoHistory(JSON.parse(storedHistory));
+      }
+    } catch (e) {
+      console.error("Failed to parse history from localStorage", e)
+    }
+  }, []);
+
+  const updateHistory = (url: string) => {
+    setRepoHistory(prevHistory => {
+      const newHistory = [url, ...prevHistory.filter(item => item !== url)].slice(0, MAX_HISTORY);
+      try {
+        localStorage.setItem('gitmap_history', JSON.stringify(newHistory));
+      } catch (e) {
+        console.error("Failed to save history to localStorage", e)
+      }
+      return newHistory;
+    });
+  };
+
+  const clearHistory = () => {
+    setRepoHistory([]);
+     try {
+      localStorage.removeItem('gitmap_history');
+    } catch (e) {
+      console.error("Failed to remove history from localStorage", e)
+    }
+  };
+
+
   const mainBranchName = useMemo(() => {
-    return repoData?.branches.find(b => b.name === 'main' || b.name === 'master')?.name || 'main';
+    if (!repoData) return 'main';
+    return repoData.branches.find(b => b.name === 'main' || b.name === 'master')?.name || 'main';
   }, [repoData]);
 
   const handleFetchRepo = async (url: string) => {
@@ -31,6 +69,7 @@ export default function Home() {
       const data = await fetchRepoData(url);
       setRepoData(data);
       setSelectedBranch('all');
+      updateHistory(url);
     } catch (err) {
       const errorMessage = 'Failed to fetch repository data. Please check the URL and try again.';
       setError(errorMessage);
@@ -66,7 +105,7 @@ export default function Home() {
     const branchesToShow = new Set<string>();
 
     repoData.commits.forEach(commit => {
-        if (visibleBranchesSet.has(commit.branch)) {
+        if (commit.branch && visibleBranchesSet.has(commit.branch)) {
             commitsToShow.add(commit.sha);
             branchesToShow.add(commit.branch);
             
@@ -75,7 +114,7 @@ export default function Home() {
                 const parent = repoData.commits.find(c => c.sha === current.parents[0]);
                 if (parent) {
                     commitsToShow.add(parent.sha);
-                    branchesToShow.add(parent.branch);
+                    if(parent.branch) branchesToShow.add(parent.branch);
                     current = parent;
                 } else {
                     break;
@@ -121,12 +160,19 @@ export default function Home() {
             )}
             {!isLoading && !repoData && !error && (
               <div className="flex flex-1 items-center justify-center">
-                <div className="text-center">
+                <div className="text-center max-w-md">
                   <GitCommit className="mx-auto h-12 w-12 text-muted-foreground" />
                   <h2 className="mt-4 text-2xl font-semibold">Visualize a Repository</h2>
                   <p className="mt-2 text-muted-foreground">
                     Enter a GitHub repository URL above to see its branch structure.
                   </p>
+                  <div className="mt-8">
+                    <RepoHistory
+                      repoHistory={repoHistory}
+                      onSelectRepo={handleFetchRepo}
+                      onClearHistory={clearHistory}
+                    />
+                  </div>
                 </div>
               </div>
             )}
