@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
-import { GitBranch, GitCommit, Github, Loader, PanelLeft } from 'lucide-react';
+import { GitBranch, GitCommit, Github, Loader, PanelLeft, LogIn } from 'lucide-react';
 import type { RepoData, Commit, Branch } from '@/lib/types';
 import { fetchRepoData } from '@/lib/actions';
 import { RepoForm } from '@/components/git-map/repo-form';
@@ -11,6 +11,10 @@ import { Filters } from '@/components/git-map/filters';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { RepoHistory } from '@/components/git-map/history';
+import { LoginForm } from '@/components/auth/LoginForm';
+import { UserProfile } from '@/components/auth/UserProfile';
+import { useAuth } from '@/contexts/AuthContext';
+import { HistoryManager, HistoryItem } from '@/lib/history';
 import {
   SidebarProvider,
   Sidebar,
@@ -22,6 +26,13 @@ import {
   SidebarGroup,
   SidebarGroupLabel
 } from '@/components/ui/sidebar';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 
 const MAX_HISTORY = 10;
 const BRANCH_PAGE_SIZE = 10;
@@ -33,38 +44,66 @@ export default function Home() {
   const [selectedCommit, setSelectedCommit] = useState<Commit | null>(null);
   const [branchFilter, setBranchFilter] = useState<string>('all');
   const [branchPage, setBranchPage] = useState(1);
-  const [repoHistory, setRepoHistory] = useState<string[]>([]);
+  const [repoHistory, setRepoHistory] = useState<HistoryItem[]>([]);
+  const [historyManager, setHistoryManager] = useState<HistoryManager | null>(null);
+  const [loginDialogOpen, setLoginDialogOpen] = useState(false);
   const { toast } = useToast();
+  const { user, loading: authLoading } = useAuth();
 
+  // Initialize history manager when user changes
   useEffect(() => {
-    try {
-      const storedHistory = localStorage.getItem('gitmap_history');
-      if (storedHistory) {
-        setRepoHistory(JSON.parse(storedHistory));
-      }
-    } catch (e) {
-      console.error("Failed to parse history from localStorage", e)
-    }
-  }, []);
+    const manager = new HistoryManager(user?.id || null);
+    setHistoryManager(manager);
+  }, [user]);
 
-  const updateHistory = (url: string) => {
-    setRepoHistory(prevHistory => {
-      const newHistory = [url, ...prevHistory.filter(item => item !== url)].slice(0, MAX_HISTORY);
-      try {
-        localStorage.setItem('gitmap_history', JSON.stringify(newHistory));
-      } catch (e) {
-        console.error("Failed to save history to localStorage", e)
-      }
-      return newHistory;
-    });
+  // Load history when history manager changes
+  useEffect(() => {
+    if (historyManager) {
+      loadHistory();
+    }
+  }, [historyManager]);
+
+  const loadHistory = async () => {
+    if (!historyManager) return;
+    
+    try {
+      const history = await historyManager.getHistory();
+      setRepoHistory(history);
+    } catch (error) {
+      console.error("Failed to load history:", error);
+    }
   };
 
-  const clearHistory = () => {
-    setRepoHistory([]);
-     try {
-      localStorage.removeItem('gitmap_history');
-    } catch (e) {
-      console.error("Failed to remove history from localStorage", e)
+  const updateHistory = async (url: string) => {
+    if (!historyManager) return;
+    
+    try {
+      await historyManager.addToHistory(url);
+      await loadHistory(); // Reload history to get updated list
+    } catch (error) {
+      console.error("Failed to update history:", error);
+    }
+  };
+
+  const clearHistory = async () => {
+    if (!historyManager) return;
+    
+    try {
+      await historyManager.clearHistory();
+      setRepoHistory([]);
+    } catch (error) {
+      console.error("Failed to clear history:", error);
+    }
+  };
+
+  const removeFromHistory = async (url: string) => {
+    if (!historyManager) return;
+    
+    try {
+      await historyManager.removeFromHistory(url);
+      await loadHistory(); // Reload history to get updated list
+    } catch (error) {
+      console.error("Failed to remove from history:", error);
     }
   };
 
@@ -180,6 +219,8 @@ export default function Home() {
                 repoHistory={repoHistory}
                 onSelectRepo={handleFetchRepo}
                 onClearHistory={clearHistory}
+                onRemoveFromHistory={removeFromHistory}
+                isAuthenticated={!!user}
               />
           </SidebarGroup>
         </SidebarContent>
@@ -197,6 +238,28 @@ export default function Home() {
             <SidebarTrigger className="md:hidden"/>
             <div className="flex-1 max-w-2xl ml-4">
               <RepoForm onSubmit={handleFetchRepo} isLoading={isLoading} />
+            </div>
+            <div className="flex items-center gap-2">
+              {authLoading ? (
+                <Loader className="h-6 w-6 animate-spin" />
+              ) : user ? (
+                <UserProfile />
+              ) : (
+                <Dialog open={loginDialogOpen} onOpenChange={setLoginDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <LogIn className="mr-2 h-4 w-4" />
+                      Sign In
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Sign in to GitMap</DialogTitle>
+                    </DialogHeader>
+                    <LoginForm onSuccess={() => setLoginDialogOpen(false)} />
+                  </DialogContent>
+                </Dialog>
+              )}
             </div>
           </header>
 
