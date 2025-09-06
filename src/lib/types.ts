@@ -5,6 +5,7 @@ export interface Commit {
     name: string;
     email: string;
     date: string;
+    avatarUrl?: string;
   };
   parents: string[];
   diff?: string;

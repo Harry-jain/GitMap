@@ -16,9 +16,9 @@ const generateSha = (message: string, date: string, parents: string[]) => {
 };
 
 const authors = [
-  { name: 'Alice', email: 'alice@example.com' },
-  { name: 'Bob', email: 'bob@example.com' },
-  { name: 'Charlie', email: 'charlie@example.com' },
+  { name: 'Alice', email: 'alice@example.com', avatarUrl: 'https://picsum.photos/seed/Alice/40/40' },
+  { name: 'Bob', email: 'bob@example.com', avatarUrl: 'https://picsum.photos/seed/Bob/40/40' },
+  { name: 'Charlie', email: 'charlie@example.com', avatarUrl: 'https://picsum.photos/seed/Charlie/40/40' },
 ];
 
 let date = new Date('2023-10-01T10:00:00Z');
@@ -29,27 +29,104 @@ const nextDate = () => {
 
 const c1Date = nextDate();
 const c1Sha = generateSha('Initial commit', c1Date, []);
-const c1 = { sha: c1Sha, message: 'Initial commit\n\n- Setup project structure\n- Add basic configuration', author: authors[0], date: c1Date, parents: [], branch: 'main', diff: '... initial diff ...' };
+const c1 = { sha: c1Sha, message: 'Initial commit\n\n- Setup project structure\n- Add basic configuration', author: authors[0], date: c1Date, parents: [], branch: 'main', diff: `
+diff --git a/package.json b/package.json
+new file mode 100644
+index 0000000..e69de29
+--- /dev/null
++++ b/package.json
+@@ -0,0 +1,10 @@
++{
++  "name": "gitmap-example",
++  "version": "1.0.0",
++  "description": "",
++  "main": "index.js",
++  "scripts": {
++    "test": "echo \"Error: no test specified\" && exit 1"
++  },
++  "keywords": [],
++  "author": "",
++  "license": "ISC"
++}
+` };
 
 const c2Date = nextDate();
 const c2Sha = generateSha('Add README', c2Date, [c1Sha]);
-const c2 = { sha: c2Sha, message: 'feat: Add README file', author: authors[0], date: c2Date, parents: [c1Sha], branch: 'main', diff: '... readme diff ...' };
+const c2 = { sha: c2Sha, message: 'feat: Add README file', author: authors[0], date: c2Date, parents: [c1Sha], branch: 'main', diff: `
+diff --git a/README.md b/README.md
+new file mode 100644
+index 0000000..d3b5b49
+--- /dev/null
++++ b/README.md
+@@ -0,0 +1 @@
++# GitMap Example
+` };
 
 const c3Date = nextDate();
 const c3Sha = generateSha('Start feature A', c3Date, [c2Sha]);
-const c3 = { sha: c3Sha, message: 'feat(sidebar): Start feature A\n\n- Add sidebar component', author: authors[1], date: c3Date, parents: [c2Sha], branch: 'feature/sidebar', diff: '... feature A diff ...' };
+const c3 = { sha: c3Sha, message: 'feat(sidebar): Start feature A\n\n- Add sidebar component', author: authors[1], date: c3Date, parents: [c2Sha], branch: 'feature/sidebar', diff: `
+diff --git a/src/components/Sidebar.js b/src/components/Sidebar.js
+new file mode 100644
+index 0000000..a1b2c3d
+--- /dev/null
++++ b/src/components/Sidebar.js
+@@ -0,0 +1,5 @@
++function Sidebar() {
++  return <div>Sidebar</div>;
++}
++
++export default Sidebar;
+` };
 
 const c4Date = nextDate();
 const c4Sha = generateSha('Update styles', c4Date, [c2Sha]);
-const c4 = { sha: c4Sha, message: 'style: Update button styles', author: authors[0], date: c4Date, parents: [c2Sha], branch: 'main', diff: '... styles diff ...' };
+const c4 = { sha: c4Sha, message: 'style: Update button styles', author: authors[0], date: c4Date, parents: [c2Sha], branch: 'main', diff: `
+diff --git a/src/styles/buttons.css b/src/styles/buttons.css
+new file mode 100644
+index 0000000..f9e8d7c
+--- /dev/null
++++ b/src/styles/buttons.css
+@@ -0,0 +1,3 @@
++.button {
++  background-color: #007bff;
++}
+` };
 
 const c5Date = nextDate();
 const c5Sha = generateSha('Implement API call', c5Date, [c3Sha]);
-const c5 = { sha: c5Sha, message: 'feat(sidebar): Implement API call for user data', author: authors[1], date: c5Date, parents: [c3Sha], branch: 'feature/sidebar', diff: '... api call diff ...' };
+const c5 = { sha: c5Sha, message: 'feat(sidebar): Implement API call for user data', author: authors[1], date: c5Date, parents: [c3Sha], branch: 'feature/sidebar', diff: `
+diff --git a/src/components/Sidebar.js b/src/components/Sidebar.js
+index a1b2c3d..b4c5d6e
+--- a/src/components/Sidebar.js
++++ b/src/components/Sidebar.js
+@@ -1,5 +1,9 @@
++import { useEffect } from 'react';
++
+ function Sidebar() {
++  useEffect(() => {
++    fetch('/api/user');
++  }, []);
+   return <div>Sidebar</div>;
+ }
+-
+ export default Sidebar;
+` };
 
 const c6Date = nextDate();
 const c6Sha = generateSha('Add login form', c6Date, [c4Sha]);
-const c6 = { sha: c6Sha, message: 'feat(auth): Add login form', author: authors[2], date: c6Date, parents: [c4Sha], branch: 'feature/login', diff: '... login form diff ...' };
+const c6 = { sha: c6Sha, message: 'feat(auth): Add login form', author: authors[2], date: c6Date, parents: [c4Sha], branch: 'feature/login', diff: `
+diff --git a/src/components/LoginForm.js b/src/components/LoginForm.js
+new file mode 100644
+index 0000000..e7f8g9h
+--- /dev/null
++++ b/src/components/LoginForm.js
+@@ -0,0 +1,5 @@
++function LoginForm() {
++  return <form>Login</form>;
++}
++
++export default LoginForm;
+` };
 
 const c7Date = nextDate();
 const c7Sha = generateSha('Merge feature/sidebar', c7Date, [c4Sha, c5Sha]);
@@ -57,7 +134,20 @@ const c7 = { sha: c7Sha, message: 'Merge pull request #12 from feature/sidebar\n
 
 const c8Date = nextDate();
 const c8Sha = generateSha('Fix login bug', c8Date, [c6Sha]);
-const c8 = { sha: c8Sha, message: 'fix(auth): Fix validation bug in login form', author: authors[2], date: c8Date, parents: [c6Sha], branch: 'feature/login', diff: '... login bug fix diff ...' };
+const c8 = { sha: c8Sha, message: 'fix(auth): Fix validation bug in login form', author: authors[2], date: c8Date, parents: [c6Sha], branch: 'feature/login', diff: `
+diff --git a/src/components/LoginForm.js b/src/components/LoginForm.js
+index e7f8g9h..f1g2h3i4
+--- a/src/components/LoginForm.js
++++ b/src/components/LoginForm.js
+@@ -1,5 +1,8 @@
+ function LoginForm() {
+-  return <form>Login</form>;
++  const handleSubmit = () => {};
++  return <form onSubmit={handleSubmit}>Login</form>;
+ }
+ 
+ export default LoginForm;
+` };
 
 const c9Date = nextDate();
 const c9Sha = generateSha('Refactor auth service', c9Date, [c8Sha]);

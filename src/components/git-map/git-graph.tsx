@@ -10,7 +10,7 @@ interface GitGraphProps {
   onCommitSelect: (commit: Commit) => void;
 }
 
-const X_SPACING = 80;
+const X_SPACING = 200;
 const Y_SPACING = 70;
 
 const branchColors = [
@@ -45,7 +45,9 @@ export function GitGraph({ repoData, onCommitSelect }: GitGraphProps) {
     }
 
     const colorMap: BranchColorMap = {};
-    const allBranchesSorted = [...repoData.branches].sort((a,b) => a.name === 'main' ? -1 : b.name === 'main' ? 1 : a.name.localeCompare(b.name));
+    const mainBranchName = repoData.branches.find(b => b.name === 'main' || b.name === 'master')?.name || 'main';
+    const allBranchesSorted = [...repoData.branches].sort((a,b) => a.name === mainBranchName ? -1 : b.name === mainBranchName ? 1 : a.name.localeCompare(b.name));
+    
     allBranchesSorted.forEach((branch, index) => {
       colorMap[branch.name] = branchColors[index % branchColors.length];
     });
@@ -60,10 +62,9 @@ export function GitGraph({ repoData, onCommitSelect }: GitGraphProps) {
     const branchLanes: { [key: string]: number } = {};
     let maxLane = 0;
     
-    // Assign 'main' or 'master' to lane 0 if it exists
-    const mainBranch = allBranchesSorted.find(b => b.name === 'main' || b.name === 'master');
-    if (mainBranch) {
-        branchLanes[mainBranch.name] = 0;
+    // Assign main branch to lane 0 if it exists
+    if (allBranchesSorted.some(b => b.name === mainBranchName)) {
+        branchLanes[mainBranchName] = 0;
         maxLane = 1;
     }
 
@@ -94,7 +95,6 @@ export function GitGraph({ repoData, onCommitSelect }: GitGraphProps) {
           const from = positions[commit.sha];
           const to = positions[parentSha];
           const color = colorMap[commit.branch] || '#ccc';
-          const isMerge = commit.parents.length > 1 && parentSha !== commit.parents[0];
 
           // Use a more pronounced curve, especially for merges
           const curve = Y_SPACING * 0.6;

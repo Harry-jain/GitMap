@@ -2,56 +2,46 @@
 
 import { Branch } from '@/lib/types';
 import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Button } from '@/components/ui/button';
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ListFilter } from 'lucide-react';
 
 interface FiltersProps {
   allBranches: Branch[];
-  visibleBranches: string[];
-  onFilterChange: (branches: string[]) => void;
+  selectedBranch: string;
+  onFilterChange: (branch: string) => void;
+  mainBranchName: string;
 }
 
-export function Filters({ allBranches, visibleBranches, onFilterChange }: FiltersProps) {
-  const handleCheckedChange = (branchName: string, isChecked: boolean) => {
-    if (isChecked) {
-      onFilterChange([...visibleBranches, branchName]);
-    } else {
-      onFilterChange(visibleBranches.filter(b => b !== branchName));
-    }
-  };
-
+export function Filters({ allBranches, selectedBranch, onFilterChange, mainBranchName }: FiltersProps) {
   return (
     <div className="flex items-center gap-4">
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline">
-            <ListFilter className="mr-2 h-4 w-4" />
-            Branches
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-56">
-          <DropdownMenuLabel>Filter by Branch</DropdownMenuLabel>
-          <DropdownMenuSeparator />
+      <div className="flex items-center gap-2">
+        <ListFilter className="h-4 w-4 text-muted-foreground" />
+        <span className="text-sm font-medium">Filter by branch:</span>
+      </div>
+      <Select value={selectedBranch} onValueChange={onFilterChange}>
+        <SelectTrigger className="w-[280px]">
+          <SelectValue placeholder="Select a branch" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Branches</SelectItem>
           {allBranches.map(branch => (
-            <DropdownMenuCheckboxItem
-              key={branch.name}
-              checked={visibleBranches.includes(branch.name)}
-              onCheckedChange={(checked) => handleCheckedChange(branch.name, !!checked)}
-            >
-              {branch.name}
-            </DropdownMenuCheckboxItem>
+            <SelectItem key={branch.name} value={branch.name}>
+              {mainBranchName} + {branch.name}
+            </SelectItem>
           ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
+        </SelectContent>
+      </Select>
       <p className="text-sm text-muted-foreground">
-        Showing {visibleBranches.length} of {allBranches.length} branches.
+        {selectedBranch === 'all'
+          ? `Showing all ${allBranches.length + 1} branches.`
+          : `Showing branches: ${mainBranchName}, ${selectedBranch}.`
+        }
       </p>
     </div>
   );

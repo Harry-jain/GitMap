@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { GitBranch, GitCommit, Github, Loader } from 'lucide-react';
-import type { RepoData, Commit } from '@/lib/types';
+import type { RepoData, Commit, Branch } from '@/lib/types';
 import { fetchRepoData } from '@/lib/mock-data';
 import { RepoForm } from '@/components/git-map/repo-form';
 import { GitGraph } from '@/components/git-map/git-graph';
@@ -16,8 +16,12 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedCommit, setSelectedCommit] = useState<Commit | null>(null);
-  const [visibleBranches, setVisibleBranches] = useState<string[]>([]);
+  const [selectedBranch, setSelectedBranch] = useState<string>('all');
   const { toast } = useToast();
+
+  const mainBranchName = useMemo(() => {
+    return repoData?.branches.find(b => b.name === 'main' || b.name === 'master')?.name || 'main';
+  }, [repoData]);
 
   const handleFetchRepo = async (url: string) => {
     setIsLoading(true);
@@ -26,7 +30,7 @@ export default function Home() {
     try {
       const data = await fetchRepoData(url);
       setRepoData(data);
-      setVisibleBranches(data.branches.map(b => b.name));
+      setSelectedBranch('all');
     } catch (err) {
       const errorMessage = 'Failed to fetch repository data. Please check the URL and try again.';
       setError(errorMessage);
@@ -45,21 +49,50 @@ export default function Home() {
     setSelectedCommit(commit);
   };
   
-  const handleFilterChange = (branches: string[]) => {
-    setVisibleBranches(branches);
+  const handleFilterChange = (branch: string) => {
+    setSelectedBranch(branch);
   };
 
-  const filteredRepoData = repoData && visibleBranches.length > 0 ? {
-    ...repoData,
-    commits: repoData.commits.filter(c => {
-      const branchOfCommit = c.branch;
-      return visibleBranches.includes(branchOfCommit) || c.parents.some(pSha => {
-        const parentCommit = repoData.commits.find(pc => pc.sha === pSha);
-        return parentCommit && visibleBranches.includes(parentCommit.branch) && parentCommit.branch !== branchOfCommit;
-      });
-    }),
-    branches: repoData.branches.filter(b => visibleBranches.includes(b.name)),
-  } : repoData ? { ...repoData, commits: [], branches: [] } : null;
+  const filteredRepoData = useMemo(() => {
+    if (!repoData) return null;
+
+    if (selectedBranch === 'all') {
+      return repoData;
+    }
+
+    const visibleBranchesSet = new Set([mainBranchName, selectedBranch]);
+
+    const commitsToShow = new Set<string>();
+    const branchesToShow = new Set<string>();
+
+    repoData.commits.forEach(commit => {
+        if (visibleBranchesSet.has(commit.branch)) {
+            commitsToShow.add(commit.sha);
+            branchesToShow.add(commit.branch);
+            
+            let current = commit;
+            while (current.parents.length > 0) {
+                const parent = repoData.commits.find(c => c.sha === current.parents[0]);
+                if (parent) {
+                    commitsToShow.add(parent.sha);
+                    branchesToShow.add(parent.branch);
+                    current = parent;
+                } else {
+                    break;
+                }
+            }
+        }
+    });
+    
+    const filteredCommits = repoData.commits.filter(c => commitsToShow.has(c.sha));
+    const filteredBranches = repoData.branches.filter(b => branchesToShow.has(b.name));
+
+    return {
+        ...repoData,
+        commits: filteredCommits,
+        branches: filteredBranches,
+    };
+  }, [repoData, selectedBranch, mainBranchName]);
 
   return (
     <div className="flex h-screen w-full bg-background text-foreground">
@@ -101,9 +134,10 @@ export default function Home() {
               <>
                 <div className="mb-4 shrink-0">
                   <Filters 
-                    allBranches={repoData.branches}
-                    visibleBranches={visibleBranches}
+                    allBranches={repoData.branches.filter(b => b.name !== mainBranchName)}
+                    selectedBranch={selectedBranch}
                     onFilterChange={handleFilterChange}
+                    mainBranchName={mainBranchName}
                   />
                 </div>
                 <div className="flex-1 relative min-h-0 flex items-center justify-center">
