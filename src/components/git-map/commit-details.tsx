@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { GitCommit, User, Calendar, BrainCircuit, GitBranch } from 'lucide-react';
+import { GitCommit, User, Calendar, BrainCircuit, GitBranch, FileDiff } from 'lucide-react';
 import { format } from 'date-fns';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import { getCommitSummary } from '@/lib/actions';
 import type { Commit } from '@/lib/types';
 import { Badge } from '../ui/badge';
 import { useToast } from '@/hooks/use-toast';
+import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 
 interface CommitDetailsProps {
   commit: Commit | null;
@@ -43,22 +44,22 @@ export function CommitDetails({ commit, isOpen, onClose }: CommitDetailsProps) {
         title: "AI Summary Failed",
         description: "Could not generate a summary for this commit. Please try again later.",
       });
-      setSummary("Summary generation failed.");
+      setSummary(null); // Keep it null on failure
     }
     setIsSummaryLoading(false);
   };
   
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent className="w-full sm:max-w-md md:max-w-lg p-0 flex flex-col" side="right">
+      <SheetContent className="w-full sm:max-w-lg md:max-w-xl p-0 flex flex-col" side="right">
         {commit ? (
           <>
             <SheetHeader className="p-6 pb-2">
-              <SheetTitle className="flex items-center gap-2">
-                <GitCommit className="h-5 w-5 text-primary" />
+              <SheetTitle className="flex items-center gap-2 text-xl">
+                <GitCommit className="h-6 w-6 text-primary" />
                 Commit Details
               </SheetTitle>
-              <SheetDescription className="break-all !mt-1 font-mono text-xs">
+              <SheetDescription className="break-all !mt-1 font-mono text-xs text-muted-foreground">
                 {commit.sha}
               </SheetDescription>
             </SheetHeader>
@@ -66,52 +67,71 @@ export function CommitDetails({ commit, isOpen, onClose }: CommitDetailsProps) {
               <div className="p-6 space-y-6">
                 <div>
                   <h3 className="text-lg font-semibold mb-2">Message</h3>
-                  <div className="text-sm bg-muted p-3 rounded-md whitespace-pre-wrap font-code">{commit.message}</div>
+                  <div className="text-sm bg-muted p-4 rounded-lg whitespace-pre-wrap font-code">{commit.message}</div>
                 </div>
                 
                 <Separator />
                 
-                <div className="space-y-3 text-sm">
-                  <div className="flex items-center gap-3">
-                    <User className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium">Author:</span>
-                    <span>{commit.author.name}</span>
+                <div className="space-y-4 text-sm">
+                  <div className="flex items-start gap-3">
+                    <User className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                    <div>
+                      <span className="font-medium">Author:</span>
+                      <span className="ml-2">{commit.author.name} &lt;{commit.author.email}&gt;</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium">Date:</span>
-                    <span>{format(new Date(commit.author.date), "PPP p")}</span>
+                  <div className="flex items-start gap-3">
+                    <Calendar className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                    <div>
+                      <span className="font-medium">Date:</span>
+                      <span className="ml-2">{format(new Date(commit.author.date), "PPP p")}</span>
+                    </div>
                   </div>
-                   <div className="flex items-center gap-3">
-                    <GitBranch className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium">Branch:</span>
-                    <Badge variant="secondary">{commit.branch}</Badge>
+                   <div className="flex items-start gap-3">
+                    <GitBranch className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                     <div>
+                      <span className="font-medium">Branch:</span>
+                      <Badge variant="secondary" className="ml-2">{commit.branch}</Badge>
+                    </div>
                   </div>
+                </div>
+
+                <Separator />
+
+                 <div>
+                  <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
+                    <BrainCircuit className="h-5 w-5 text-primary" />
+                    AI-Generated Summary
+                  </h3>
+                  {summary ? (
+                     <Alert>
+                      <AlertDescription>{summary}</AlertDescription>
+                    </Alert>
+                  ) : (
+                    <div className="text-center border-2 border-dashed rounded-lg p-6 space-y-3">
+                      <p className="text-sm text-muted-foreground">Get a quick summary of this commit's changes with AI.</p>
+                       <Button onClick={handleGenerateSummary} disabled={isSummaryLoading} size="sm">
+                         {isSummaryLoading ? 'Generating...' : 'Generate AI Summary'}
+                       </Button>
+                       {isSummaryLoading && (
+                         <div className="space-y-2 pt-4">
+                            <Skeleton className="h-4 w-full" />
+                            <Skeleton className="h-4 w-full" />
+                            <Skeleton className="h-4 w-3/4" />
+                          </div>
+                       )}
+                    </div>
+                  )}
                 </div>
 
                 <Separator />
 
                 <div>
-                  <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
-                    <BrainCircuit className="h-5 w-5 text-primary" />
-                    AI Summary
+                   <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
+                    <FileDiff className="h-5 w-5 text-muted-foreground" />
+                    Diff
                   </h3>
-                  {isSummaryLoading ? (
-                    <div className="space-y-2">
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-4 w-3/4" />
-                    </div>
-                  ) : summary ? (
-                    <div className="text-sm bg-muted p-3 rounded-md">{summary}</div>
-                  ) : (
-                    <div className="text-center border rounded-lg p-4 space-y-2">
-                      <p className="text-sm text-muted-foreground">Get a quick summary of this commit's changes.</p>
-                       <Button onClick={handleGenerateSummary} disabled={isSummaryLoading}>
-                         Generate AI Summary
-                       </Button>
-                    </div>
-                  )}
+                   <div className="text-sm bg-muted p-4 rounded-lg whitespace-pre-wrap font-code text-xs">{commit.diff || 'No diff available.'}</div>
                 </div>
               </div>
             </ScrollArea>

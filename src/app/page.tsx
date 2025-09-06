@@ -1,14 +1,13 @@
 "use client";
 
 import { useState } from 'react';
-import { GitBranch, GitCommit, Github, Loader, Settings2 } from 'lucide-react';
-import type { RepoData, Commit, Branch } from '@/lib/types';
+import { GitBranch, GitCommit, Github, Loader } from 'lucide-react';
+import type { RepoData, Commit } from '@/lib/types';
 import { fetchRepoData } from '@/lib/mock-data';
 import { RepoForm } from '@/components/git-map/repo-form';
 import { GitGraph } from '@/components/git-map/git-graph';
 import { CommitDetails } from '@/components/git-map/commit-details';
 import { Filters } from '@/components/git-map/filters';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 
@@ -25,10 +24,9 @@ export default function Home() {
     setError(null);
     setSelectedCommit(null);
     try {
-      // In a real app, you'd fetch from the GitHub API based on the URL.
       const data = await fetchRepoData(url);
       setRepoData(data);
-      setVisibleBranches(data.branches.map(b => b.name)); // Show all branches by default
+      setVisibleBranches(data.branches.map(b => b.name));
     } catch (err) {
       const errorMessage = 'Failed to fetch repository data. Please check the URL and try again.';
       setError(errorMessage);
@@ -75,14 +73,14 @@ export default function Home() {
             <RepoForm onSubmit={handleFetchRepo} isLoading={isLoading} />
           </div>
           <Button variant="ghost" size="icon" asChild>
-            <a href="https://github.com" target="_blank" rel="noopener noreferrer">
+            <a href="https://github.com/firebase/studio" target="_blank" rel="noopener noreferrer">
               <Github className="h-5 w-5" />
             </a>
           </Button>
         </header>
 
         <div className="flex flex-1 overflow-hidden">
-          <div className="flex-1 flex flex-col overflow-hidden p-4 md:p-6">
+          <div className="flex-1 flex flex-col overflow-auto p-4 md:p-6">
             {isLoading && (
               <div className="flex flex-1 items-center justify-center">
                 <Loader className="h-12 w-12 animate-spin text-primary" />
@@ -108,7 +106,7 @@ export default function Home() {
                     onFilterChange={handleFilterChange}
                   />
                 </div>
-                <div className="flex-1 relative min-h-0">
+                <div className="flex-1 relative min-h-0 flex items-center justify-center">
                   <GitGraph 
                     repoData={filteredRepoData ?? { commits: [], branches: [] }}
                     onCommitSelect={handleCommitSelect} 
