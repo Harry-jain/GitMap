@@ -100,13 +100,19 @@ export function GitGraph({ repoData, onCommitSelect }: GitGraphProps) {
           const from = positions[commit.sha];
           const to = positions[parentSha];
           const color = colorMap[commit.branch] || '#ccc';
+          
+          const isMergeFromMain = (commitsBySha[parentSha]?.branch === mainBranchName) && (commit.branch !== mainBranchName);
 
           const curve = Y_SPACING * 0.6;
           let d: string;
           if (from.x === to.x) {
             d = `M ${from.x} ${from.y} L ${to.x} ${to.y}`;
           } else {
-             d = `M ${from.x} ${from.y} C ${from.x} ${from.y - curve}, ${to.x} ${to.y + curve}, ${to.x} ${to.y}`;
+             const cp1x = from.x;
+             const cp1y = from.y - curve;
+             const cp2x = to.x;
+             const cp2y = to.y + curve;
+             d = `M ${from.x} ${from.y} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${to.x} ${to.y}`;
           }
 
           return {
