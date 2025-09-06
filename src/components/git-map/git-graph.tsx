@@ -10,9 +10,9 @@ interface GitGraphProps {
   onCommitSelect: (commit: Commit) => void;
 }
 
-const X_SPACING_BASE = 250;
-const X_SPACING_MIN = 150;
-const Y_SPACING = 80;
+const X_SPACING_BASE = 200;
+const X_SPACING_MIN = 120;
+const Y_SPACING = 70;
 
 const branchColors = [
   '#4c8bf5', // blue
@@ -107,8 +107,8 @@ export function GitGraph({ repoData, onCommitSelect }: GitGraphProps) {
           } else {
              const dx = from.x - to.x;
              const dy = from.y - to.y;
-             const curveX = dx * 0.3;
-             const curveY = dy * 0.2;
+             const curveX = dx * 0.2;
+             const curveY = dy * 0.1;
 
              const cp1x = from.x - curveX;
              const cp1y = from.y - curveY;
